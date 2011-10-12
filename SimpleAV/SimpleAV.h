@@ -100,7 +100,8 @@ int SA_get_height(SAContext *);
 
 float SA_get_duration(SAContext *);
 
-float SA_get_clock(void);
+// FIXME: maybe we should never use this sh*t?
+// float SA_get_clock(void);
 
 #ifdef __cplusplus
 }

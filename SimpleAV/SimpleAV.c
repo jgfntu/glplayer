@@ -550,10 +550,14 @@ float SA_get_duration(SAContext *sa_ctx)
      return (float)(sa_ctx->avfmt_ctx_ptr->duration) / (float)(AV_TIME_BASE);
 }
 
-float SA_get_clock(void)
-{
-     return (float)av_gettime() / (float)1000000;
-}
+// FIXME: this will never works
+//
+// float SA_get_clock(void)
+// {
+//      int64_t t = av_gettime();
+//      //return (double)(t / 1000000) + (double)((t % 1000000) / (double)1000000);
+//      return t / 1000000.f;
+// }
 
 #ifdef __cplusplus
 }

@@ -69,7 +69,7 @@ void GLPlayerWindow::paintGL() {
      GLint  nOfColors;
 
      SDL_Surface *frame = decoder.getFrame();
-     
+
 #ifndef __GLPLAYER__NO__DEBUG__
 #ifdef  __GLPLAYER__DEBUG__SAVE__FRAME__
      static int n = 0;
@@ -98,10 +98,6 @@ void GLPlayerWindow::paintGL() {
      glGenTextures( 1, &texture );
      glBindTexture( GL_TEXTURE_2D, texture );
 
-#ifndef __GLPLAYER__NO__DEBUG__
-     fprintf(stderr, "%d\n", (int)texture);
-#endif
-
      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
  
@@ -116,7 +112,28 @@ void GLPlayerWindow::paintGL() {
      glEnd();
      glDeleteTextures(1, &texture);
 
-     std::cout << "printGL() finished." << std::endl;
+#ifndef __GLPLAYER__NO__DEBUG__
+#ifdef __GLPLAYER__DEBUG__CAL__FPS__
+
+     // static int64_t prevFrameShowTime = 0;
+     // std::cout << (double)1000000 / (double)(av_gettime() - prevFrameShowTime) << std::endl;
+     // prevFrameShowTime = av_gettime();
+
+     static int64_t prevFrameShowTime = 0;
+     static int FPSCalCycleCount = -1;
+     if(FPSCalCycleCount == -1) {
+          FPSCalCycleCount = 0;
+          prevFrameShowTime = av_gettime();
+     } else if(FPSCalCycleCount == 5) {
+          std::cout << "Current FPS: " << (double)5000000 / (double)(av_gettime() - prevFrameShowTime)
+                    << std::endl;
+          FPSCalCycleCount = 0;
+          prevFrameShowTime = av_gettime();
+     }
+     FPSCalCycleCount++;
+
+#endif
+#endif
 }
 
 void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {

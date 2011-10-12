@@ -8,6 +8,8 @@ TARGET =
 DEPENDPATH += . SimpleAV
 INCLUDEPATH += . SimpleAV
 
+DEFINES += __GLPLAYER__DEBUG__CAL__FPS__
+
 LIBS += `sdl-config --libs` `pkg-config --static --libs libavcodec libavformat libavutil libswscale`
 CFLAGS += `sdl-config --cflags` `pkg-config --static --cflags libavcodec libavformat libavutil libswscale`
 
