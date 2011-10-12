@@ -1,0 +1,5 @@
+To compile glplayer:
+    1. qmake glplayer.pro
+    2. make
+
+This program is not finished.
