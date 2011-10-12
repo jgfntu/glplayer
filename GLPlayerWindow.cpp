@@ -26,21 +26,21 @@ void GLPlayerWindow::startTimer() {
 
 void GLPlayerWindow::openVideoFile(std::string videoPath) {
 
-     #ifndef __GLPLAYER__NO__DEBUG__
+#ifndef __GLPLAYER__NO__DEBUG__
      std::cerr << __FILE__ << ": opening the video..." << std::endl;
-     #endif
+#endif
      
      decoder.openVideo(videoPath);
      
-     #ifndef __GLPLAYER__NO__DEBUG__
+#ifndef __GLPLAYER__NO__DEBUG__
      std::cerr << __FILE__ << ": decoder successfully opened the video file." << std::endl;
-     #endif
+#endif
      
      this->resize(decoder.getWidth(), decoder.getHeight());
 
-     #ifndef __GLPLAYER_NO__DEBUG__
+#ifndef __GLPLAYER_NO__DEBUG__
      std::cerr << __FILE__ << ": window resized to the video size." << std::endl;
-     #endif
+#endif
 }
 
 void GLPlayerWindow::initializeGL() {
@@ -70,14 +70,14 @@ void GLPlayerWindow::paintGL() {
 
      SDL_Surface *frame = decoder.getFrame();
      
-     #ifndef __GLPLAYER__NO__DEBUG__
-     #ifdef  __GLPLAYER__DEBUG__SAVE__FRAME__
+#ifndef __GLPLAYER__NO__DEBUG__
+#ifdef  __GLPLAYER__DEBUG__SAVE__FRAME__
      static int n = 0;
      char picPath[100];
      sprintf(picPath, "frame_%d.bmp", n++);
      SDL_SaveBMP(frame, picPath);
-     #endif
-     #endif
+#endif
+#endif
 
      nOfColors = frame->format->BytesPerPixel;
      if (nOfColors == 4) {     // contains an alpha channel
