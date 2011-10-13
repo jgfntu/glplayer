@@ -16,6 +16,15 @@ extern "C" {
 #include "SimpleAV/SimpleAV.h"
 }
 
+#define GLPlayerDecoder__Playing  0
+#define GLPlayerDecoder__Stopped  1
+#define GLPlayerDecoder__Paused   2
+
+struct GLVideoPacket {
+     SDL_Surface *surface;
+     int64_t pts;
+};
+
 class GLPlayerDecoder {
      
 public:
@@ -32,23 +41,35 @@ public:
      // So does the destructor.
      void closeVideo();
      
-     // float getTime();
      SDL_Surface *getFrame();
 
      int getWidth();
      int getHeight();
      int getDuration();
 
-     // void start();
+     float getVideoClock();
+
+     // *FIXME*: Be cautious of videoEOF!
+     void start();
      // void pause();
      // void stop();
      // void seek(float pos);
 
+     bool isPlaying();
+     bool isPaused();
+     bool isStopped();
+
+     bool ends();
+
 protected:
 
      void convertAVFrameToSDLSurface(AVFrame *frame, SDL_Surface *surface);
+
+     bool videoEOF, curFrameReturned;
      
-     // int startTime, restartAt;
+     int64_t startTime;
+     float restartAt;
+     
      struct SwsContext *swsctx;
      SAContext *sactx;
      int width, height, duration;
@@ -58,6 +79,8 @@ protected:
      SDL_Surface *curFrame, *nextFrame;
      
      float curFramePTS, nextFramePTS;
+
+     int status;
 };
 
 #endif

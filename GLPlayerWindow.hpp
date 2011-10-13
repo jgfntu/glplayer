@@ -16,6 +16,7 @@ class GLPlayerWindow : public QGLWidget
 
 public:
      GLPlayerWindow(QWidget *parent = NULL);
+     ~GLPlayerWindow();
 
      // it's ugly to seperate it from the constructor;
      // but we need to make sure OpenGL is fully initialized
@@ -38,6 +39,7 @@ protected:
      void keyPressEvent(QKeyEvent *event);
 
      GLuint texture;
+     bool textureContainsData;
      
      QTimer *timer;
      GLPlayerDecoder decoder;

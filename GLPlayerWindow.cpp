@@ -10,9 +10,15 @@
 #include "GLPlayerWindow.hpp"
 
 GLPlayerWindow::GLPlayerWindow(QWidget *parent)
-     : QGLWidget(parent), timer(NULL)
-{
+     : QGLWidget(parent), textureContainsData(false), timer(NULL) {
+     
      setMouseTracking(true);
+}
+
+GLPlayerWindow::~GLPlayerWindow() {
+     if(textureContainsData) {
+          glDeleteTextures(1, &texture);
+     }
 }
 
 void GLPlayerWindow::startTimer() {
@@ -21,7 +27,8 @@ void GLPlayerWindow::startTimer() {
 
      timer = new QTimer();
      connect(timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-     timer->start(1000 / 60);
+     // timer->start(1000 / 60);
+     timer->start(0);
 }
 
 void GLPlayerWindow::openVideoFile(std::string videoPath) {
@@ -41,6 +48,8 @@ void GLPlayerWindow::openVideoFile(std::string videoPath) {
 #ifndef __GLPLAYER_NO__DEBUG__
      std::cerr << __FILE__ << ": window resized to the video size." << std::endl;
 #endif
+
+     decoder.start();
 }
 
 void GLPlayerWindow::initializeGL() {
@@ -50,67 +59,88 @@ void GLPlayerWindow::initializeGL() {
      glEnable(GL_BLEND);
      glEnable(GL_POLYGON_SMOOTH);
      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-     glClearColor(0, 0, 0, 0);
+     glClearColor(1.0f, 1.0f, 1.0f, 0);
 }
 
 void GLPlayerWindow::resizeGL(int w, int h) {
      glViewport(0, 0, w, h);
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
-     gluOrtho2D(0, w, 0, h); // set origin to bottom left corner
+     gluOrtho2D(0, w, 0, h); // set origin to top (bottom?) left corner
+     // glOrtho(0, w, 0, h, 0, 0.000001); // set origin to top (bottom?) left corner
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity();
 }
 
 void GLPlayerWindow::paintGL() {
-     glClear(GL_COLOR_BUFFER_BIT);
 
      GLenum texture_format;
      GLint  nOfColors;
 
-     SDL_Surface *frame = decoder.getFrame();
+     if(decoder.ends()) {
+          // FIXME: fill black here
 
 #ifndef __GLPLAYER__NO__DEBUG__
-#ifdef  __GLPLAYER__DEBUG__SAVE__FRAME__
-     static int n = 0;
-     char picPath[100];
-     sprintf(picPath, "frame_%d.bmp", n++);
-     SDL_SaveBMP(frame, picPath);
+          std::cout << "Video ends!" << std::endl;
 #endif
-#endif
-
-     nOfColors = frame->format->BytesPerPixel;
-     if (nOfColors == 4) {     // contains an alpha channel
-          if (frame->format->Rmask == 0x000000ff)
-               texture_format = GL_RGBA;
-          else
-               texture_format = GL_BGRA;
-     } else if (nOfColors == 3) {     // no alpha channel
-          if (frame->format->Rmask == 0x000000ff)
-               texture_format = GL_RGB;
-          else
-               texture_format = GL_BGR;
-     } else {
-          std::cerr << "warning: the image is not truecolor..  this will probably break" << std::endl;
-          // FIXME: this error should not go unhandled
+          return;
      }
- 
-     glGenTextures( 1, &texture );
-     glBindTexture( GL_TEXTURE_2D, texture );
 
-     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+     SDL_Surface *frame = decoder.getFrame();
+     if(frame != NULL) {
+          
+#ifndef __GLPLAYER__NO__DEBUG__
+          std::cout << "New frame acquired!" << std::endl;
+#endif
+          
+#ifndef __GLPLAYER__NO__DEBUG__
+#ifdef  __GLPLAYER__DEBUG__SAVE__FRAME__
+          static int n = 0;
+          char picPath[100];
+          sprintf(picPath, "frame_%d.bmp", n++);
+          SDL_SaveBMP(frame, picPath);
+#endif
+#endif
+
+          nOfColors = frame->format->BytesPerPixel;
+          if (nOfColors == 4) {     // contains an alpha channel
+               if (frame->format->Rmask == 0x000000ff)
+                    texture_format = GL_RGBA;
+               else
+                    texture_format = GL_BGRA;
+          } else if (nOfColors == 3) {     // no alpha channel
+               if (frame->format->Rmask == 0x000000ff)
+                    texture_format = GL_RGB;
+               else
+                    texture_format = GL_BGR;
+          } else {
+               std::cerr << "warning: the image is not truecolor... "
+                         << "this will probably break." << std::endl;
+               // FIXME: this error should not go unhandled
+          }
+
+          if(textureContainsData) {
+               glDeleteTextures(1, &texture);
+          }
  
-     glTexImage2D( GL_TEXTURE_2D, 0, nOfColors, frame->w, frame->h, 0,
-                   texture_format, GL_UNSIGNED_BYTE, frame->pixels );
+          glGenTextures(1, &texture);
+          glBindTexture(GL_TEXTURE_2D, texture);
+
+          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+ 
+          glTexImage2D(GL_TEXTURE_2D, 0, nOfColors, frame->w, frame->h, 0,
+                       texture_format, GL_UNSIGNED_BYTE, frame->pixels);
+
+          textureContainsData = true;
+     }
 
      glBegin(GL_QUADS);
           glTexCoord2f(0.0f, 0.0f); glVertex2f(0, this->height());
           glTexCoord2f(1.0f, 0.0f); glVertex2f(this->width(), this->height());
-          glTexCoord2f(1.0f, 1.1f); glVertex2f(this->width(), 0);
+          glTexCoord2f(1.0f, 1.0f); glVertex2f(this->width(), 0);
           glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, 0.0f);
      glEnd();
-     glDeleteTextures(1, &texture);
 
 #ifndef __GLPLAYER__NO__DEBUG__
 #ifdef __GLPLAYER__DEBUG__CAL__FPS__
@@ -125,6 +155,9 @@ void GLPlayerWindow::paintGL() {
           FPSCalCycleCount = 0;
           prevFrameShowTime = av_gettime();
      } else if(FPSCalCycleCount == 5) {
+          // This will also work.
+          // std::cout << "Yoooooo FPS: " << (float)5000000 / (float)(av_gettime() - prevFrameShowTime)
+          //           << std::endl;
           std::cout << "Current FPS: " << (double)5000000 / (double)(av_gettime() - prevFrameShowTime)
                     << std::endl;
           FPSCalCycleCount = 0;

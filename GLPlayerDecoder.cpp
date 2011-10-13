@@ -5,8 +5,9 @@
 // FIXME: integrate a Saya-specified version of SimpleAV later.
 
 GLPlayerDecoder::GLPlayerDecoder()
-     : swsctx(NULL), sactx(NULL), curFrame(NULL), nextFrame(NULL),
-       curFramePTS(0.0f), nextFramePTS(0.0f) {
+     : videoEOF(false), curFrameReturned(false),
+       swsctx(NULL), sactx(NULL), curFrame(NULL), nextFrame(NULL),
+       curFramePTS(0.0f), nextFramePTS(0.0f), status(GLPlayerDecoder__Stopped) {
      
      SA_init();
 }
@@ -65,30 +66,56 @@ void GLPlayerDecoder::closeVideo() {
 }
 
 // FIXME: to be finished
-/*
 void GLPlayerDecoder::start() {
+
+     status = GLPlayerDecoder__Playing;
      
+     if(isPaused()) {
+          // FIXME: when the decoder should start from the paused point
+     } else {
+          startTime = av_gettime();
+     }
 }
-*/
 
-// FIXME: to be finished
 SDL_Surface *GLPlayerDecoder::getFrame() {
-     // *FIXME*: this is only for "fast-forwarding".
 
-     // This is necessary because we always use the same memory for these 2 frames.
-     // what we do is in fact "curFrame <- nextFrame".
-     SDL_Surface *t = curFrame;
-     curFrame = nextFrame;
-     nextFrame = t;
+     if(videoEOF || isPaused()) {
+          return NULL;
+     }
 
-     curFramePTS = nextFramePTS;
+     float videoClock = getVideoClock();
+
+     if(curFrameReturned == false &&
+        curFramePTS != 1.0f && nextFramePTS != 1.0f &&
+        curFramePTS <= videoClock && videoClock < nextFramePTS) {
+          curFrameReturned = true;
+          return NULL;
+     }
      
+     if(nextFramePTS != -1.0f && nextFramePTS <= videoClock) {
+          
+          // This is necessary because we always use the same memory for these 2 frames.
+          // what we do is in fact "curFrame <- nextFrame".
+          SDL_Surface *t = curFrame;
+          curFrame = nextFrame;
+          nextFrame = t;
+          curFramePTS = nextFramePTS;
+          
 
-     SAVideoPacket *vp = SA_get_vp(sactx);
-     nextFramePTS = vp->pts;
-     convertAVFrameToSDLSurface(vp->frame_ptr, nextFrame);
-     SA_free_vp(vp);
-     
+          SAVideoPacket *vp = SA_get_vp(sactx);
+          if(vp == NULL) {
+               nextFramePTS = -1.0f;
+          } else {
+               nextFramePTS = vp->pts;
+               convertAVFrameToSDLSurface(vp->frame_ptr, nextFrame);
+               SA_free_vp(vp);
+          }
+     }
+
+     if(curFramePTS <= videoClock && nextFramePTS == -1.0f) {
+          videoEOF = true;
+          curFramePTS = -1.0f;
+     }
      return curFrame;
 }
 
@@ -102,6 +129,32 @@ int GLPlayerDecoder::getHeight() {
 
 int GLPlayerDecoder::getDuration() {
      return duration;
+}
+
+float GLPlayerDecoder::getVideoClock() {
+     if(isPlaying()) {
+          return (float)(av_gettime() - startTime) / 1000000.0f;
+     } else if(isPaused()) {
+          return restartAt;
+     } else {
+          return 0.0f;
+     }
+}
+
+bool GLPlayerDecoder::isPlaying() {
+     return (status == GLPlayerDecoder__Playing);
+}
+
+bool GLPlayerDecoder::isPaused() {
+     return (status == GLPlayerDecoder__Paused);
+}
+
+bool GLPlayerDecoder::isStopped() {
+     return (status == GLPlayerDecoder__Stopped);
+}
+
+bool GLPlayerDecoder::ends() {
+     return videoEOF;
 }
 
 // helper functions
