@@ -65,15 +65,24 @@ void GLPlayerDecoder::closeVideo() {
      curFrame = nextFrame = NULL;
 }
 
-// FIXME: to be finished
+// FIXME: should be revised to make it work with stop() and seek().
 void GLPlayerDecoder::start() {
-
-     status = GLPlayerDecoder__Playing;
-     
      if(isPaused()) {
-          // FIXME: when the decoder should start from the paused point
+          startTime = av_gettime() - (int64_t)(restartAt * 1000000.0f);
      } else {
           startTime = av_gettime();
+     }
+     
+     status = GLPlayerDecoder__Playing;
+}
+
+// FIXME: should be revised to make it work with stop() and seek().
+void GLPlayerDecoder::pause() {
+     if(isPaused()) {
+          return;
+     } else {
+          restartAt = getVideoClock();
+          status = GLPlayerDecoder__Paused;
      }
 }
 

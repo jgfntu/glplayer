@@ -51,7 +51,7 @@ public:
 
      // *FIXME*: Be cautious of videoEOF!
      void start();
-     // void pause();
+     void pause();
      // void stop();
      // void seek(float pos);
 

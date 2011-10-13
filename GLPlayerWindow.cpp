@@ -72,6 +72,8 @@ void GLPlayerWindow::resizeGL(int w, int h) {
      glLoadIdentity();
 }
 
+// FIXME: this will only work when computer is fast enough to
+// keep video synced while not dropping any frame.
 void GLPlayerWindow::paintGL() {
 
      GLenum texture_format;
@@ -173,6 +175,13 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
      switch(event->key()) {
      case Qt::Key_Escape:
           close();
+          break;
+     case Qt::Key_Space:
+          if(decoder.isPaused()) {
+               decoder.start();
+          } else if(decoder.isPlaying()) {
+               decoder.pause();
+          }
           break;
      default:
           event->ignore();
