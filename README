@@ -1,3 +1,5 @@
+Glplayer will be under WTFPL forever. So feel free to use and hack it.
+
 To compile glplayer:
     1. qmake glplayer.pro
     2. make
