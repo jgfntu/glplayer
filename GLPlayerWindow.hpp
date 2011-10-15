@@ -16,7 +16,7 @@
 #include <QKeyEvent>
 #include <QTimer>
 
-#include "SimpleAV/SDL/SimpleAV_SDL.h"
+#include <SimpleAV_SDL.h>
 
 class GLPlayerWindow : public QGLWidget
 {
