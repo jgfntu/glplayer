@@ -15,7 +15,8 @@
 GLPlayerDecoder::GLPlayerDecoder()
      : videoEOF(false), curFrameReturned(false),
        swsctx(NULL), sactx(NULL), curFrame(NULL), nextFrame(NULL),
-       curFramePTS(0.0f), nextFramePTS(0.0f), status(GLPlayerDecoder__Stopped) {
+       curFramePTS(0.0f), nextFramePTS(0.0f), status(GLPlayerDecoder__Stopped),
+       audioPlayer(NULL) {
      
      SA_init();
 }
@@ -57,6 +58,8 @@ void GLPlayerDecoder::openVideo(std::string videoPath) {
      nextFramePTS = vp->pts;
      convertAVFrameToSDLSurface(vp->frame_ptr, nextFrame);
      SA_free_vp(vp);
+     
+     audioPlayer = new GLPlayerAudioPlayer(this);
 }
 
 void GLPlayerDecoder::closeVideo() {
@@ -68,9 +71,12 @@ void GLPlayerDecoder::closeVideo() {
           SDL_FreeSurface(curFrame);
      if(nextFrame != NULL)
           SDL_FreeSurface(nextFrame);
+     if(audioPlayer != NULL)
+          delete audioPlayer;
      sactx = NULL;
      swsctx = NULL;
      curFrame = nextFrame = NULL;
+     audioPlayer = NULL;
 }
 
 // FIXME: should be revised to make it work with stop() and seek().

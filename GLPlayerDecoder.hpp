@@ -24,6 +24,8 @@ extern "C" {
 #include "SimpleAV/SimpleAV.h"
 }
 
+#include "GLPlayerAudioPlayer.hpp"
+
 #define GLPlayerDecoder__Playing  0
 #define GLPlayerDecoder__Stopped  1
 #define GLPlayerDecoder__Paused   2
@@ -34,6 +36,10 @@ struct GLVideoPacket {
 };
 
 class GLPlayerDecoder {
+
+     // GLPlayerAudioPlayer needs startTime , restartAt and sactx
+     // of this class.
+     friend class GLPlayerAudioPlayer;
      
 public:
      GLPlayerDecoder();
@@ -89,6 +95,8 @@ protected:
      float curFramePTS, nextFramePTS;
 
      int status;
+
+     GLPlayerAudioPlayer *audioPlayer;
 };
 
 #endif
