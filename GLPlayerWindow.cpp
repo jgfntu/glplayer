@@ -89,19 +89,18 @@ void GLPlayerWindow::resizeGL(int w, int h) {
      glViewport(0, 0, w, h);
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
-     gluOrtho2D(0, w, 0, h); // set origin to top (bottom?) left corner
+     gluOrtho2D(0, w, 0, h); // set origin to top left corner
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity();
 }
 
-// FIXME: this will only work when computer is fast enough to
-// keep video synced while not dropping any frame.
 void GLPlayerWindow::paintGL() {
 
      GLenum texture_format;
      GLint  nOfColors;
 
      if(SASDL_eof(sasdlCtx)) {
+          // FIXME: or it is stopped?
           // FIXME: fill screen black?
           return;
      }
