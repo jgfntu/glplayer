@@ -17,6 +17,7 @@
 #include <QTimer>
 
 #include "GLPlayerDecoder.hpp"
+#include "SimpleAV/SDL/SimpleAV_SDL.h"
 
 class GLPlayerWindow : public QGLWidget
 {
@@ -50,7 +51,9 @@ protected:
      bool textureContainsData;
      
      QTimer *timer;
-     GLPlayerDecoder decoder;
+
+     SASDLContext *sasdlCtx;
+     SDL_Surface *tmpSurf;
 };
 
 #endif

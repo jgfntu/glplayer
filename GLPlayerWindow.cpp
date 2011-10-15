@@ -13,16 +13,21 @@
 #endif
 
 #include <SDL/SDL.h>
-#include <SDL/SDL_opengl.h>
+#include <SDL/SDL_Mixer.h>
 
 #include "GLPlayerWindow.hpp"
 
 GLPlayerWindow::GLPlayerWindow(QWidget *parent)
-     : QGLWidget(parent), textureContainsData(false), timer(NULL) {
+     : QGLWidget(parent), textureContainsData(false), timer(NULL),
+       sasdlCtx(NULL), tmpSurf(NULL) {
+
+     SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
+     SASDL_init();
      
      setMouseTracking(true);
 }
 
+// *FIXME*: to be finished!
 GLPlayerWindow::~GLPlayerWindow() {
      if(textureContainsData) {
           glDeleteTextures(1, &texture);
@@ -41,23 +46,27 @@ void GLPlayerWindow::startTimer() {
 
 void GLPlayerWindow::openVideoFile(std::string videoPath) {
 
-#ifndef __GLPLAYER__NO__DEBUG__
-     std::cerr << __FILE__ << ": opening the video..." << std::endl;
-#endif
-     
-     decoder.openVideo(videoPath);
-     
-#ifndef __GLPLAYER__NO__DEBUG__
-     std::cerr << __FILE__ << ": decoder successfully opened the video file." << std::endl;
-#endif
-     
-     this->resize(decoder.getWidth(), decoder.getHeight());
+     sasdlCtx = SASDL_open(videoPath.c_str());
+     if(sasdlCtx == NULL) {
+          std::cerr << __FILE__ << ": Failed to open video file." << std::endl;
+          // FIXME: handle this!
+     }
 
-#ifndef __GLPLAYER_NO__DEBUG__
-     std::cerr << __FILE__ << ": window resized to the video size." << std::endl;
-#endif
+     if(Mix_OpenAudio(sasdlCtx->sa_ctx->a_codec_ctx->sample_rate, AUDIO_S16SYS,
+                      sasdlCtx->sa_ctx->a_codec_ctx->channels, 512) < 0) {
+          std::cerr << __FILE__ << ": Mix_OpenAudio: " << SDL_GetError() << std::endl;
+          // FIXME: handle this!
+     }
+     Mix_SetPostMix(SASDL_audio_decode, sasdlCtx);
 
-     decoder.start();
+     int width = SASDL_get_video_width(sasdlCtx);
+     int height = SASDL_get_video_height(sasdlCtx);
+     
+     this->resize(width, height);
+     tmpSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32,
+                                    0, 0, 0, 0);
+
+     SASDL_play(sasdlCtx);
 }
 
 void GLPlayerWindow::initializeGL() {
@@ -75,7 +84,6 @@ void GLPlayerWindow::resizeGL(int w, int h) {
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
      gluOrtho2D(0, w, 0, h); // set origin to top (bottom?) left corner
-     // glOrtho(0, w, 0, h, 0, 0.000001); // set origin to top (bottom?) left corner
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity();
 }
@@ -87,64 +95,48 @@ void GLPlayerWindow::paintGL() {
      GLenum texture_format;
      GLint  nOfColors;
 
-     if(decoder.ends()) {
-          // FIXME: fill black here
+     if(SASDL_eof(sasdlCtx)) {
+          std::cout << "Your video ends here." << std::endl;
 
-#ifndef __GLPLAYER__NO__DEBUG__
-          std::cout << "Video ends!" << std::endl;
-#endif
+          // FIXME: fill screen black?
           return;
      }
 
-     SDL_Surface *frame = decoder.getFrame();
-     if(frame != NULL) {
-          
-#ifndef __GLPLAYER__NO__DEBUG__
-          std::cout << "New frame acquired!" << std::endl;
-#endif
-          
-#ifndef __GLPLAYER__NO__DEBUG__
-#ifdef  __GLPLAYER__DEBUG__SAVE__FRAME__
-          static int n = 0;
-          char picPath[100];
-          sprintf(picPath, "frame_%d.bmp", n++);
-          SDL_SaveBMP(frame, picPath);
-#endif
-#endif
+     // SDL_Surface *frame = decoder.getFrame();
+     SASDL_draw(sasdlCtx, tmpSurf);
 
-          nOfColors = frame->format->BytesPerPixel;
-          if (nOfColors == 4) {     // contains an alpha channel
-               if (frame->format->Rmask == 0x000000ff)
-                    texture_format = GL_RGBA;
-               else
-                    texture_format = GL_BGRA;
-          } else if (nOfColors == 3) {     // no alpha channel
-               if (frame->format->Rmask == 0x000000ff)
-                    texture_format = GL_RGB;
-               else
-                    texture_format = GL_BGR;
-          } else {
-               std::cerr << "warning: the image is not truecolor... "
-                         << "this will probably break." << std::endl;
-               // FIXME: this error should not go unhandled
-          }
-
-          if(textureContainsData) {
-               glDeleteTextures(1, &texture);
-          }
- 
-          glGenTextures(1, &texture);
-          glBindTexture(GL_TEXTURE_2D, texture);
-
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
- 
-          glTexImage2D(GL_TEXTURE_2D, 0, nOfColors, frame->w, frame->h, 0,
-                       texture_format, GL_UNSIGNED_BYTE, frame->pixels);
-
-          textureContainsData = true;
+     nOfColors = frame->format->BytesPerPixel;
+     if (nOfColors == 4) {
+          if (frame->format->Rmask == 0x000000ff)
+               texture_format = GL_RGBA;
+          else
+               texture_format = GL_BGRA;
+     } else if (nOfColors == 3) {
+          if (frame->format->Rmask == 0x000000ff)
+               texture_format = GL_RGB;
+          else
+               texture_format = GL_BGR;
+     } else {
+          std::cerr << "warning: the image is not truecolor... "
+                    << "this will probably break." << std::endl;
+          // FIXME: this error should not go unhandled
      }
 
+     if(textureContainsData) {
+          glDeleteTextures(1, &texture);
+     }
+ 
+     glGenTextures(1, &texture);
+     glBindTexture(GL_TEXTURE_2D, texture);
+
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+ 
+     glTexImage2D(GL_TEXTURE_2D, 0, nOfColors, frame->w, frame->h, 0,
+                  texture_format, GL_UNSIGNED_BYTE, frame->pixels);
+
+     textureContainsData = true;
+     
      glBegin(GL_QUADS);
           glTexCoord2f(0.0f, 0.0f); glVertex2f(0, this->height());
           glTexCoord2f(1.0f, 0.0f); glVertex2f(this->width(), this->height());
@@ -177,6 +169,9 @@ void GLPlayerWindow::paintGL() {
 
 #endif
 #endif
+
+     // FIXME: will paintGL() be called while waiting for the next frame?
+     SASDL_wait_for_next_frame(sasdlCtx);
 }
 
 void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
@@ -185,12 +180,15 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
           close();
           break;
      case Qt::Key_Space:
-          if(decoder.isPaused()) {
-               decoder.start();
-          } else if(decoder.isPlaying()) {
-               decoder.pause();
+          switch(SASDL_get_video_status(sasdlCtx)) {
+          case SASDL_is_playing:
+          case SASDL_is_stopped:
+               SASDL_play(sasdlCtx);
+               break;
+          case SASDL_is_paused:
+               SASDL_pause(sasdlCtx);
+               break;
           }
-          break;
      default:
           event->ignore();
           break;
