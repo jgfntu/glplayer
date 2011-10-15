@@ -8,8 +8,8 @@ TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 
-LIBS += -lSimpleAV -lSimpleAV_SDL `sdl-config --libs` `pkg-config --static --libs libavcodec libavformat libavutil libswscale`
-CFLAGS += -lSimpleAV -lSimpleAV_SDL `sdl-config --cflags` `pkg-config --static --cflags libavcodec libavformat libavutil libswscale`
+LIBS += -lSimpleAV_SDL -lSimpleAV `sdl-config --libs` -lSDL_mixer `pkg-config --static --libs libavcodec libavformat libavutil libswscale`
+CFLAGS += `sdl-config --cflags` `pkg-config --static --cflags libavcodec libavformat libavutil libswscale`
 
 # Input
 HEADERS += GLPlayerWindow.hpp

@@ -23,17 +23,21 @@ GLPlayerWindow::GLPlayerWindow(QWidget *parent)
      : QGLWidget(parent), textureContainsData(false), timer(NULL),
        sasdlCtx(NULL), frame(NULL) {
 
-     SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
+     SDL_Init(SDL_INIT_AUDIO);
      SASDL_init();
      
      setMouseTracking(true);
 }
 
-// *FIXME*: to be finished!
 GLPlayerWindow::~GLPlayerWindow() {
+     // *FIXME*: stop timer???
      if(textureContainsData) {
           glDeleteTextures(1, &texture);
      }
+     Mix_CloseAudio();
+     SASDL_close(sasdlCtx);
+     SDL_FreeSurface(frame);
+     SDL_Quit();
 }
 
 void GLPlayerWindow::startTimer() {
@@ -94,14 +98,10 @@ void GLPlayerWindow::resizeGL(int w, int h) {
 // keep video synced while not dropping any frame.
 void GLPlayerWindow::paintGL() {
 
-     std::cout << "in paintGL()..." << std::endl;
-
      GLenum texture_format;
      GLint  nOfColors;
 
      if(SASDL_eof(sasdlCtx)) {
-          std::cout << "Your video ends here." << std::endl;
-
           // FIXME: fill screen black?
           return;
      }
@@ -179,6 +179,9 @@ void GLPlayerWindow::paintGL() {
 }
 
 void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
+
+     // *FIXME*: add seeking/stopping support.
+     
      switch(event->key()) {
      case Qt::Key_Escape:
           close();
