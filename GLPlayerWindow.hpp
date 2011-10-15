@@ -16,7 +16,6 @@
 #include <QKeyEvent>
 #include <QTimer>
 
-#include "GLPlayerDecoder.hpp"
 #include "SimpleAV/SDL/SimpleAV_SDL.h"
 
 class GLPlayerWindow : public QGLWidget
@@ -53,7 +52,7 @@ protected:
      QTimer *timer;
 
      SASDLContext *sasdlCtx;
-     SDL_Surface *tmpSurf;
+     SDL_Surface *frame;
 };
 
 #endif

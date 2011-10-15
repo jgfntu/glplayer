@@ -12,14 +12,16 @@
 #include <cstdio>
 #endif
 
+extern "C" {
 #include <SDL/SDL.h>
-#include <SDL/SDL_Mixer.h>
+#include <SDL/SDL_mixer.h>
+}
 
 #include "GLPlayerWindow.hpp"
 
 GLPlayerWindow::GLPlayerWindow(QWidget *parent)
      : QGLWidget(parent), textureContainsData(false), timer(NULL),
-       sasdlCtx(NULL), tmpSurf(NULL) {
+       sasdlCtx(NULL), frame(NULL) {
 
      SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
      SASDL_init();
@@ -46,7 +48,7 @@ void GLPlayerWindow::startTimer() {
 
 void GLPlayerWindow::openVideoFile(std::string videoPath) {
 
-     sasdlCtx = SASDL_open(videoPath.c_str());
+     sasdlCtx = SASDL_open((char *)(videoPath.c_str()));
      if(sasdlCtx == NULL) {
           std::cerr << __FILE__ << ": Failed to open video file." << std::endl;
           // FIXME: handle this!
@@ -63,7 +65,7 @@ void GLPlayerWindow::openVideoFile(std::string videoPath) {
      int height = SASDL_get_video_height(sasdlCtx);
      
      this->resize(width, height);
-     tmpSurf = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32,
+     frame = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32,
                                     0, 0, 0, 0);
 
      SASDL_play(sasdlCtx);
@@ -92,6 +94,8 @@ void GLPlayerWindow::resizeGL(int w, int h) {
 // keep video synced while not dropping any frame.
 void GLPlayerWindow::paintGL() {
 
+     std::cout << "in paintGL()..." << std::endl;
+
      GLenum texture_format;
      GLint  nOfColors;
 
@@ -103,7 +107,7 @@ void GLPlayerWindow::paintGL() {
      }
 
      // SDL_Surface *frame = decoder.getFrame();
-     SASDL_draw(sasdlCtx, tmpSurf);
+     SASDL_draw(sasdlCtx, frame);
 
      nOfColors = frame->format->BytesPerPixel;
      if (nOfColors == 4) {

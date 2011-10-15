@@ -14,10 +14,17 @@
 extern "C" {
 #endif
 
+// dirty hack for C++
+#ifndef INT64_C
+#define INT64_C(c) (c ## LL)
+#define UINT64_C(c) (c ## ULL)
+#endif
+
 #include <SDL/SDL.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
-#include <SimpleAV.h>
+
+#include "SimpleAV/SimpleAV.h"
 
 #define  TRUE   1
 #define  FALSE  0

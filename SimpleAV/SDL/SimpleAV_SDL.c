@@ -13,8 +13,8 @@ extern "C" {
 
 #include <stdlib.h>
 #include <libswscale/swscale.h>
-#include <SimpleAV.h>
 
+#include "SimpleAV/SimpleAV.h"
 #include "SimpleAV_SDL.h"
 
 int SASDL_init(void)
