@@ -21,7 +21,7 @@ extern "C" {
 
 GLPlayerWindow::GLPlayerWindow(QWidget *parent)
      : QGLWidget(parent), textureContainsData(false), timer(NULL),
-       sasdlCtx(NULL), frame(NULL) {
+       sasdlCtx(NULL), frame(NULL), videoStopped(true) {
 
      SDL_Init(SDL_INIT_AUDIO);
      SASDL_init();
@@ -48,8 +48,6 @@ void GLPlayerWindow::startTimer() {
      timer = new QTimer();
      connect(timer, SIGNAL(timeout()), this, SLOT(updateGL()));
 
-     // FIXME: fixed FPS?
-     // timer->start(1000 / 60);
      timer->start(0);
 }
 
@@ -76,6 +74,8 @@ bool GLPlayerWindow::openVideoFile(std::string videoPath) {
                                     0, 0, 0, 0);
 
      SASDL_play(sasdlCtx);
+     videoStopped = false;
+     
      return true;
 }
 
@@ -103,13 +103,11 @@ void GLPlayerWindow::paintGL() {
      GLenum texture_format;
      GLint  nOfColors;
 
-     if(SASDL_eof(sasdlCtx)) {
-          // FIXME: or it is stopped?
-          // FIXME: fill screen black?
+     if(SASDL_eof(sasdlCtx) || videoStopped) {
+          glClear(GL_COLOR_BUFFER_BIT);
           return;
      }
 
-     // SDL_Surface *frame = decoder.getFrame();
      SASDL_draw(sasdlCtx, frame);
 
      nOfColors = frame->format->BytesPerPixel;
@@ -183,7 +181,7 @@ void GLPlayerWindow::paintGL() {
 
 void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
 
-     // *FIXME*: add seeking/stopping support.
+     // *FIXME*: add seeking support.
      
      switch(event->key()) {
      case Qt::Key_Escape:
@@ -191,14 +189,20 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
           break;
      case Qt::Key_Space:
           switch(SASDL_get_video_status(sasdlCtx)) {
-          case SASDL_is_playing:
+          case SASDL_is_paused:
           case SASDL_is_stopped:
                SASDL_play(sasdlCtx);
                break;
-          case SASDL_is_paused:
+          case SASDL_is_playing:
                SASDL_pause(sasdlCtx);
                break;
           }
+          videoStopped = false;
+          break;
+     case Qt::Key_S:
+          SASDL_stop(sasdlCtx);
+          videoStopped = true;
+          break;
      default:
           event->ignore();
           break;
