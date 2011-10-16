@@ -21,7 +21,7 @@ extern "C" {
 
 GLPlayerWindow::GLPlayerWindow(QWidget *parent)
      : QGLWidget(parent), textureContainsData(false), timer(NULL),
-       sasdlCtx(NULL), frame(NULL), videoStopped(true) {
+       sasdlCtx(NULL), frame(NULL) {
 
      SDL_Init(SDL_INIT_AUDIO);
      SASDL_init();
@@ -74,7 +74,6 @@ bool GLPlayerWindow::openVideoFile(std::string videoPath) {
                                     0, 0, 0, 0);
 
      SASDL_play(sasdlCtx);
-     videoStopped = false;
      
      return true;
 }
@@ -103,7 +102,7 @@ void GLPlayerWindow::paintGL() {
      GLenum texture_format;
      GLint  nOfColors;
 
-     if(SASDL_eof(sasdlCtx) || videoStopped) {
+     if(SASDL_eof(sasdlCtx) || SASDL_video_is_stopped(sasdlCtx)) {
           glClear(GL_COLOR_BUFFER_BIT);
           return;
      }
@@ -197,11 +196,9 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
                SASDL_pause(sasdlCtx);
                break;
           }
-          videoStopped = false;
           break;
      case Qt::Key_S:
           SASDL_stop(sasdlCtx);
-          videoStopped = true;
           break;
      default:
           event->ignore();

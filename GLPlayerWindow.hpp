@@ -53,12 +53,6 @@ protected:
 
      SASDLContext *sasdlCtx;
      SDL_Surface *frame;
-
-     // FIXME: this is a small hack, because SASDL in fact
-     // will never set video status to stopped.
-     // When requesting to stop, it will stop, then seek to the start.
-     // SA_seek will then set the status to paused...
-     bool videoStopped;
 };
 
 #endif
