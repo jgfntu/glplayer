@@ -179,9 +179,6 @@ void GLPlayerWindow::paintGL() {
 }
 
 void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
-
-     // *FIXME*: add seeking support.
-     
      switch(event->key()) {
      case Qt::Key_Escape:
           close();
@@ -199,6 +196,12 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
           break;
      case Qt::Key_S:
           SASDL_stop(sasdlCtx);
+          break;
+     case Qt::Key_Left:
+          SASDL_seek(sasdlCtx, SASDL_get_video_clock(sasdlCtx) - 10.0f);
+          break;
+     case Qt::Key_Right:
+          SASDL_seek(sasdlCtx, SASDL_get_video_clock(sasdlCtx) + 10.0f);
           break;
      default:
           event->ignore();
