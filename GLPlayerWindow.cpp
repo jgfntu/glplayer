@@ -102,7 +102,11 @@ void GLPlayerWindow::paintGL() {
      GLenum texture_format;
      GLint  nOfColors;
 
-     if(SASDL_eof(sasdlCtx) || SASDL_video_is_stopped(sasdlCtx)) {
+     if(SASDL_eof(sasdlCtx)) {
+          SASDL_stop(sasdlCtx);
+     }
+
+     if(SASDL_video_is_stopped(sasdlCtx)) {
           glClear(GL_COLOR_BUFFER_BIT);
           return;
      }
@@ -183,26 +187,27 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
      case Qt::Key_Escape:
           close();
           break;
+          
      case Qt::Key_Space:
-          switch(SASDL_get_video_status(sasdlCtx)) {
-          case SASDL_is_paused:
-          case SASDL_is_stopped:
-               SASDL_play(sasdlCtx);
-               break;
-          case SASDL_is_playing:
+          if(SASDL_video_is_playing(sasdlCtx)) {
                SASDL_pause(sasdlCtx);
-               break;
+          } else {
+               SASDL_play(sasdlCtx);
           }
           break;
+          
      case Qt::Key_S:
           SASDL_stop(sasdlCtx);
           break;
+          
      case Qt::Key_Left:
           SASDL_seek(sasdlCtx, SASDL_get_video_clock(sasdlCtx) - 10.0f);
           break;
+          
      case Qt::Key_Right:
           SASDL_seek(sasdlCtx, SASDL_get_video_clock(sasdlCtx) + 10.0f);
           break;
+          
      default:
           event->ignore();
           break;
