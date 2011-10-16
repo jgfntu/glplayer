@@ -14,27 +14,22 @@
 
 int main(int argc, char *argv[])
 {
+     if(argc != 2) {
+          std::cout << "Glplayer Usage:" << std::endl
+                    << "glplayer <filename>" << std::endl;
+          return 1;
+     }
+     
      QApplication app(argc, argv);
-
-#ifndef __GLPLAYER__NO__DEBUG__
-     std::cout << "number of arguments: " << argc << std::endl
-               << argv[0] << std::endl
-               << argv[1] << std::endl << std::endl;
-#endif
 
      GLPlayerWindow window;
      window.resize(800, 600);
      window.show();
 
-#ifndef __GLPLAYER__NO__DEBUG__
-     std::cerr << __FILE__ << ": opening the video..." << std::endl;
-#endif
-     
-     window.openVideoFile(argv[1]);
-
-#ifndef __GLPLAYER__NO__DEBUG__
-     std::cerr << __FILE__ << ": timer will be started!" << std::endl;
-#endif
+     if(window.openVideoFile(argv[1]) == false) {
+          std::cout << "Failed to open file " << argv[1] << std::endl;
+          return 1;
+     }
      
      window.startTimer();
 

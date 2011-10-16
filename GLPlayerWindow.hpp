@@ -33,7 +33,7 @@ public:
      // PS: should we call this after loading video in the editor?
      void startTimer();
      
-     void openVideoFile(std::string videoPath);
+     bool openVideoFile(std::string videoPath);
 
 protected slots:
      void paintGL();

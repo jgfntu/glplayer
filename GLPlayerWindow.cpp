@@ -30,7 +30,8 @@ GLPlayerWindow::GLPlayerWindow(QWidget *parent)
 }
 
 GLPlayerWindow::~GLPlayerWindow() {
-     // *FIXME*: stop timer???
+     timer->stop();
+     
      if(textureContainsData) {
           glDeleteTextures(1, &texture);
      }
@@ -46,22 +47,24 @@ void GLPlayerWindow::startTimer() {
 
      timer = new QTimer();
      connect(timer, SIGNAL(timeout()), this, SLOT(updateGL()));
+
+     // FIXME: fixed FPS?
      // timer->start(1000 / 60);
      timer->start(0);
 }
 
-void GLPlayerWindow::openVideoFile(std::string videoPath) {
+bool GLPlayerWindow::openVideoFile(std::string videoPath) {
 
      sasdlCtx = SASDL_open((char *)(videoPath.c_str()));
      if(sasdlCtx == NULL) {
           std::cerr << __FILE__ << ": Failed to open video file." << std::endl;
-          // FIXME: handle this!
+          return false;
      }
 
      if(Mix_OpenAudio(sasdlCtx->sa_ctx->a_codec_ctx->sample_rate, AUDIO_S16SYS,
                       sasdlCtx->sa_ctx->a_codec_ctx->channels, 512) < 0) {
           std::cerr << __FILE__ << ": Mix_OpenAudio: " << SDL_GetError() << std::endl;
-          // FIXME: handle this!
+          return false;
      }
      Mix_SetPostMix(SASDL_audio_decode, sasdlCtx);
 
@@ -73,6 +76,7 @@ void GLPlayerWindow::openVideoFile(std::string videoPath) {
                                     0, 0, 0, 0);
 
      SASDL_play(sasdlCtx);
+     return true;
 }
 
 void GLPlayerWindow::initializeGL() {
@@ -82,7 +86,7 @@ void GLPlayerWindow::initializeGL() {
      glEnable(GL_BLEND);
      glEnable(GL_POLYGON_SMOOTH);
      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-     glClearColor(1.0f, 1.0f, 1.0f, 0);
+     glClearColor(0.0f, 0.0f, 0.0f, 0);
 }
 
 void GLPlayerWindow::resizeGL(int w, int h) {
