@@ -71,7 +71,7 @@ bool GLPlayerWindow::openVideoFile(std::string videoPath) {
      
      this->resize(width, height);
      frame = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32,
-                                    0, 0, 0, 0);
+                                  0, 0, 0, 0);
 
      SASDL_play(sasdlCtx);
      
@@ -104,6 +104,7 @@ void GLPlayerWindow::paintGL() {
 
      if(SASDL_eof(sasdlCtx)) {
           SASDL_stop(sasdlCtx);
+          connect(timer, SIGNAL(timeout()), this, SLOT(close()));
      }
 
      if(SASDL_video_is_stopped(sasdlCtx)) {
@@ -146,10 +147,10 @@ void GLPlayerWindow::paintGL() {
      textureContainsData = true;
      
      glBegin(GL_QUADS);
-          glTexCoord2f(0.0f, 0.0f); glVertex2f(0, this->height());
-          glTexCoord2f(1.0f, 0.0f); glVertex2f(this->width(), this->height());
-          glTexCoord2f(1.0f, 1.0f); glVertex2f(this->width(), 0);
-          glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, 0.0f);
+     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, this->height());
+     glTexCoord2f(1.0f, 0.0f); glVertex2f(this->width(), this->height());
+     glTexCoord2f(1.0f, 1.0f); glVertex2f(this->width(), 0);
+     glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, 0.0f);
      glEnd();
 
 #ifndef __GLPLAYER__NO__DEBUG__
