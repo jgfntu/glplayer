@@ -11,8 +11,8 @@ INCLUDEPATH += .
 CONFIG += link_pkgconfig
 PKGCONFIG += libavcodec libavformat libavutil libswscale
 
-LIBS += -lSimpleAV_SDL -lSimpleAV `sdl-config --libs` -lSDL_mixer
-CFLAGS += `sdl-config --cflags`
+LIBS += `pkg-config --libs SimpleAV_SDL SDL_mixer sdl`
+CFLAGS += -g -O2 -Wall -W `pkg-config --cflags SimpleAV_SDL SDL_mixer sdl`
 
 # Input
 HEADERS += GLPlayerWindow.hpp
