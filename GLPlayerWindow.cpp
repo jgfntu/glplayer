@@ -13,8 +13,8 @@
 #endif
 
 extern "C" {
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
+#include <SDL.h>
+#include <SDL_mixer.h>
 }
 
 #include "GLPlayerWindow.hpp"
@@ -92,12 +92,16 @@ void GLPlayerWindow::resizeGL(int w, int h) {
      glViewport(0, 0, w, h);
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
-     gluOrtho2D(0, w, 0, h); // set origin to top left corner
+     glOrtho(0, w, 0, h, -1, 1); // set origin to top left corner
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity();
 }
 
 void GLPlayerWindow::paintGL() {
+     if (sasdlCtx == NULL) {
+         glClear(GL_COLOR_BUFFER_BIT);
+         return;
+     }
 
      GLenum texture_format;
      GLint  nOfColors;
@@ -202,11 +206,11 @@ void GLPlayerWindow::keyPressEvent(QKeyEvent* event) {
           break;
           
      case Qt::Key_Left:
-          SASDL_seek(sasdlCtx, SASDL_get_video_clock(sasdlCtx) - 10.0f);
+          SASDL_seek_accurate(sasdlCtx, SASDL_get_video_clock(sasdlCtx) - 10.0f);
           break;
           
      case Qt::Key_Right:
-          SASDL_seek(sasdlCtx, SASDL_get_video_clock(sasdlCtx) + 10.0f);
+          SASDL_seek_accurate(sasdlCtx, SASDL_get_video_clock(sasdlCtx) + 10.0f);
           break;
           
      default:
